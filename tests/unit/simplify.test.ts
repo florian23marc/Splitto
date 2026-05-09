@@ -30,4 +30,18 @@ describe('simplifyDebts', () => {
       ]),
     );
   });
+
+  it('should ignore extremely small residual balances when settling debts', () => {
+    const settlements = simplifyDebts({ a: 10, b: -10, c: 1e-10, d: -1e-10 });
+    expect(settlements).toEqual([{ from: 'b', to: 'a', amount: 10 }]);
+  });
+
+  it('should settle a complex multi-round case with unsorted insertion order', () => {
+    const settlements = simplifyDebts({ b: -12, a: 7, d: -5, c: 10 });
+    expect(settlements).toEqual([
+      { from: 'b', to: 'c', amount: 10 },
+      { from: 'b', to: 'a', amount: 2 },
+      { from: 'd', to: 'a', amount: 5 },
+    ]);
+  });
 });
