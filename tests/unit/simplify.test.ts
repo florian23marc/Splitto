@@ -44,4 +44,33 @@ describe('simplifyDebts', () => {
       { from: 'd', to: 'a', amount: 5 },
     ]);
   });
+
+  it('should handle multiple creditors with different amounts', () => {
+    const settlements = simplifyDebts({ a: 20, b: 10, c: -15, d: -15 });
+    expect(settlements).toEqual([
+      { from: 'c', to: 'a', amount: 15 },
+      { from: 'd', to: 'a', amount: 5 },
+      { from: 'd', to: 'b', amount: 10 },
+    ]);
+  });
+
+  it('should handle balances close to zero', () => {
+    const settlements = simplifyDebts({ a: 1e-10, b: -1e-10 });
+    expect(settlements).toEqual([]);
+  });
+
+  it('should handle five-person scenario', () => {
+    const settlements = simplifyDebts({ a: 50, b: -10, c: -10, d: -10, e: -20 });
+    expect(settlements).toEqual([
+      { from: 'e', to: 'a', amount: 20 },
+      { from: 'b', to: 'a', amount: 10 },
+      { from: 'c', to: 'a', amount: 10 },
+      { from: 'd', to: 'a', amount: 10 },
+    ]);
+  });
+
+  it('should handle case with only positive balances', () => {
+    const settlements = simplifyDebts({ a: 10, b: 20 });
+    expect(settlements).toEqual([]);
+  });
 });

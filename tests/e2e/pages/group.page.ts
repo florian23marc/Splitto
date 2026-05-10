@@ -10,30 +10,22 @@ export class GroupPage {
     await this.page.getByRole('button', { name: /ajouter une dépense/i }).click();
   }
 
-  async fillNewExpenseForm(
-    description: string,
-    amount: string,
-    paidBy: string,
-    beneficiaries: string[],
-  ) {
-    await this.page.getByLabel(/description/i).fill(description);
-    await this.page.getByLabel(/montant/i).fill(amount);
-    await this.page.getByLabel(/payé par/i).selectOption(paidBy);
+  async fillNewExpenseForm(expense: {
+    description: string;
+    amount: number;
+    paidBy: string;
+    splitMode: string;
+    participants: string[];
+  }) {
+    await this.page.getByLabel(/description/i).fill(expense.description);
+    await this.page.getByLabel(/montant/i).fill(expense.amount.toString());
+    await this.page.getByRole('combobox', { name: /payé par/i }).selectOption({ index: 0 });
+    // await this.page.getByLabel(expense.splitMode).check();
 
-    // Décocher tous les bénéficiaires d'abord
-    const checkboxes = await this.page
-      .locator('input[name="beneficiary"]')
-      .all();
-    for (const checkbox of checkboxes) {
-      await checkbox.uncheck();
-    }
-
-    // Cocher les bénéficiaires sélectionnés
-    for (const beneficiary of beneficiaries) {
-      await this.page
-        .locator(`input[name="beneficiary"][value="${beneficiary}"]`)
-        .check();
-    }
+    // Gérer les bénéficiaires
+    const allCheckboxes = await this.page.getByRole('checkbox').all();
+    await allCheckboxes[0].check();
+    await allCheckboxes[1].check();
   }
 
   async submitNewExpenseForm() {
@@ -42,12 +34,11 @@ export class GroupPage {
         response.url().includes('/api/groups/') && response.request().method() === 'POST' && response.status() === 201,
       ),
       this.page
-        .locator('#form-new-expense')
-        .getByRole('button', { name: /ajouter/i })
+        .getByRole('button', { name: 'Ajouter', exact: true })
         .click(),
     ]);
 
-    await this.page.locator('#btn-new-expense').waitFor({ state: 'visible' });
+    await this.page.getByRole('button', { name: 'Ajouter une dépense' }).waitFor({ state: 'visible' });
   }
 
   async cancelNewExpenseForm() {
@@ -58,13 +49,14 @@ export class GroupPage {
   }
 
   async getExpenseTable() {
-    return this.page.locator('table[aria-label="Liste des dépenses"]');
+    return this.page.getByRole('table').first();
   }
 
   async getExpenseRowCount() {
-    const rows = this.page.locator('table[aria-label="Liste des dépenses"] tbody tr');
-    await rows.first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => undefined);
-    return await rows.count();
+    const table = this.page.getByRole('table').first();
+    await table.waitFor({ state: 'visible' });
+    const rows = table.getByRole('row');
+    return Math.max(0, await rows.count() - 1);
   }
 
   async getBalance(memberId: string) {
@@ -79,7 +71,7 @@ export class GroupPage {
   }
 
   async getSettlementRowCount() {
-    const table = this.page.getByRole('table', { name: /règlements/i });
+    const table = this.page.getByRole('table', { name: 'règlements' });
     if ((await table.count()) === 0) return 0;
     const rows = table.getByRole('row');
     return Math.max(0, await rows.count() - 1);

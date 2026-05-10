@@ -26,25 +26,22 @@ export class HomePage {
         response.url().endsWith('/api/groups') && response.request().method() === 'POST' && response.status() === 201,
       ),
       this.page
-        .locator('#form-new-group')
         .getByRole('button', { name: /créer/i })
         .click(),
     ]);
 
-    await this.page.locator('[data-group-id]').first().waitFor({ state: 'visible' });
+    await this.page.getByRole('listitem').first().waitFor({ state: 'visible' });
   }
 
   async cancelNewGroupForm() {
     await this.page
-      .locator('#dlg-new-group')
+      .getByRole('dialog', { name: /créer un groupe/i })
       .getByRole('button', { name: /annuler/i })
       .click();
   }
 
   getGroupCard(groupName: string) {
-    return this.page.locator('[data-group-id]', {
-      hasText: groupName,
-    });
+    return this.page.getByText(groupName);
   }
 
   async clickGroupByName(groupName: string) {
