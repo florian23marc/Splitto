@@ -58,14 +58,13 @@ export class GroupPage {
   }
 
   async getExpenseTable() {
-    return this.page.getByRole('table', { name: /liste des dépenses/i });
+    return this.page.locator('table[aria-label="Liste des dépenses"]');
   }
 
   async getExpenseRowCount() {
-    const table = this.page.getByRole('table', { name: /liste des dépenses/i });
-    if ((await table.count()) === 0) return 0;
-    const rows = table.getByRole('row');
-    return Math.max(0, await rows.count() - 1);
+    const rows = this.page.locator('table[aria-label="Liste des dépenses"] tbody tr');
+    await rows.first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => undefined);
+    return await rows.count();
   }
 
   async getBalance(memberId: string) {
